@@ -118,7 +118,7 @@ func testGetUsers() async throws {
     do {
         // Use the new BlockChildrenSequence
         var blockCount = 0
-        for try await block in await notion.blockChildren(id: pageId) {
+        for try await block in notion.blockChildren(id: pageId) {
             #expect(block.object == "block", "Expected object type to be 'block'")
             #expect(!block.id.isEmpty, "Expected block to have a non-empty ID")
             blockCount += 1
@@ -144,7 +144,7 @@ func testGetUsers() async throws {
     do {
         // Use the new BlockChildrenSequence
         var blocks: [Block] = []
-        for try await block in await notion.blockChildren(id: pageId) {
+        for try await block in notion.blockChildren(id: pageId) {
             blocks.append(block)
         }
 

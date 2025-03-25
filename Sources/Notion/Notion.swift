@@ -73,7 +73,7 @@ public actor Notion {
         return try processAPIResponse(data: data)
     }
 
-    public func getBlockChildren(id: String, startCursor: String? = nil, pageSize: Int? = nil) async throws -> BlockChildrenResponse {
+    internal func getBlockChildren(id: String, startCursor: String? = nil, pageSize: Int? = nil) async throws -> BlockChildrenResponse {
         var queryItems: [String: String] = [:]
         if let startCursor = startCursor {
             queryItems["start_cursor"] = startCursor
