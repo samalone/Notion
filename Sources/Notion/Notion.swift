@@ -1,6 +1,3 @@
-// The Swift Programming Language
-// https://docs.swift.org/swift-book
-
 import Foundation
 
 /// The Notion actor is responsible for managing the Notion API.
@@ -101,100 +98,12 @@ public actor Notion {
     }
     
     /// Returns an AsyncSequence that lazily iterates through all children blocks
-    public func blockChildren(id: String, pageSize: Int? = nil) -> BlockChildrenSequence {
+    nonisolated public func blockChildren(id: String, pageSize: Int? = nil) -> BlockChildrenSequence {
         BlockChildrenSequence(notion: self, blockID: id, pageSize: pageSize)
     }
 }
 
-// Add new AsyncSequence to iterate over block children
-public struct BlockChildrenSequence: AsyncSequence, Sendable {
-    public typealias Element = Block
-
-    private let notion: Notion
-    private let blockID: String
-    private let pageSize: Int?
-    
-    public init(notion: Notion, blockID: String, pageSize: Int? = nil) {
-        self.notion = notion
-        self.blockID = blockID
-        self.pageSize = pageSize
-    }
-    
-    public func makeAsyncIterator() -> Iterator {
-        Iterator(notion: notion, blockID: blockID, pageSize: pageSize)
-    }
-    
-    public struct Iterator: AsyncIteratorProtocol, Sendable {
-        private let notion: Notion
-        private let blockID: String
-        private let pageSize: Int?
-        private var currentBatch: [Block] = []
-        private var nextCursor: String? = nil
-        private var finished = false
-        
-        init(notion: Notion, blockID: String, pageSize: Int?) {
-            self.notion = notion
-            self.blockID = blockID
-            self.pageSize = pageSize
-        }
-        
-        public mutating func next() async throws -> Block? {
-            while currentBatch.isEmpty && !finished {
-                let response = try await notion.getBlockChildren(id: blockID, startCursor: nextCursor, pageSize: pageSize)
-                currentBatch.append(contentsOf: response.results)
-                nextCursor = response.nextCursor
-                finished = !response.hasMore
-            }
-            return currentBatch.isEmpty ? nil : currentBatch.removeFirst()
-        }
-    }
-}
-
-// MARK: - Error Types
-
-/// Custom error for Notion API errors
-public struct NotionAPIError: Error, CustomStringConvertible {
-    public struct Response: Codable, Sendable {
-        public let object: String
-        public let status: Int
-        public let code: String
-        public let message: String
-        public let requestID: String?
-        
-        private enum CodingKeys: String, CodingKey {
-            case object, status, code, message
-            case requestID = "request_id"
-        }
-    }
-    
-    public let response: Response
-    
-    public var description: String {
-        "Notion API Error: [\(response.code)] \(response.message) (Status: \(response.status))"
-    }
-    
-    public var localizedDescription: String {
-        description
-    }
-}
-
-// MARK: - Notion API Models
-
 /// Base protocol for all Notion objects
 public protocol NotionObject: Sendable, Codable {
     var object: String { get }
-}
-
-/// Response wrapper for paginated lists of objects
-public struct ListResponse<T: Codable & Sendable>: Sendable, Codable {
-    public let object: String
-    public let results: [T]
-    public let nextCursor: String?
-    public let hasMore: Bool
-    
-    private enum CodingKeys: String, CodingKey {
-        case object, results
-        case nextCursor = "next_cursor"
-        case hasMore = "has_more"
-    }
 }
