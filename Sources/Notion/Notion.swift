@@ -15,8 +15,18 @@ public actor Notion {
     }
 
     /// Internal routine to create a URL request with the proper headers.
-    private func getRequest(for path: String) async throws -> URLRequest {
-        var request = URLRequest(url: baseURL.appendingPathComponent(path))
+    private func getRequest(for path: String, queryItems: [String: String]? = nil) async throws -> URLRequest {
+        var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: true)!
+        
+        if let queryItems = queryItems, !queryItems.isEmpty {
+            components.queryItems = queryItems.map { URLQueryItem(name: $0.key, value: $0.value) }
+        }
+        
+        guard let url = components.url else {
+            throw NSError(domain: "NotionError", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid URL components"])
+        }
+        
+        var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiVersion, forHTTPHeaderField: "Notion-Version")
@@ -25,6 +35,13 @@ public actor Notion {
     
     /// Processes API response data and checks for error responses
     private func processAPIResponse<T: Decodable>(data: Data) throws -> T {
+        // Debug: Pretty-print the JSON response
+        if let jsonObject = try? JSONSerialization.jsonObject(with: data),
+           let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted),
+           let prettyString = String(data: prettyData, encoding: .utf8) {
+            print("API Response:\n\(prettyString)")
+        }
+
         let decoder = JSONDecoder()
         
         // Check if the response is an error
@@ -59,8 +76,16 @@ public actor Notion {
         return try processAPIResponse(data: data)
     }
 
-    public func getBlockChildren(id: String) async throws -> [Block] {
-        let request = try await getRequest(for: "blocks/\(id)/children")
+    public func getBlockChildren(id: String, startCursor: String? = nil, pageSize: Int? = nil) async throws -> BlockChildrenResponse {
+        var queryItems: [String: String] = [:]
+        if let startCursor = startCursor {
+            queryItems["start_cursor"] = startCursor
+        }
+        if let pageSize = pageSize {
+            queryItems["page_size"] = "\(pageSize)"
+        }
+        
+        let request = try await getRequest(for: "blocks/\(id)/children", queryItems: queryItems.isEmpty ? nil : queryItems)
         let (data, response) = try await URLSession.shared.data(for: request)
         
         if let httpResponse = response as? HTTPURLResponse, 
@@ -72,7 +97,56 @@ public actor Notion {
         }
         
         let listResponse: ListResponse<Block> = try processAPIResponse(data: data)
-        return listResponse.results
+        return BlockChildrenResponse(object: listResponse.object, results: listResponse.results, nextCursor: listResponse.nextCursor, hasMore: listResponse.hasMore)
+    }
+    
+    /// Returns an AsyncSequence that lazily iterates through all children blocks
+    public func blockChildren(id: String, pageSize: Int? = nil) -> BlockChildrenSequence {
+        BlockChildrenSequence(notion: self, blockID: id, pageSize: pageSize)
+    }
+}
+
+// Add new AsyncSequence to iterate over block children
+public struct BlockChildrenSequence: AsyncSequence, Sendable {
+    public typealias Element = Block
+
+    private let notion: Notion
+    private let blockID: String
+    private let pageSize: Int?
+    
+    public init(notion: Notion, blockID: String, pageSize: Int? = nil) {
+        self.notion = notion
+        self.blockID = blockID
+        self.pageSize = pageSize
+    }
+    
+    public func makeAsyncIterator() -> Iterator {
+        Iterator(notion: notion, blockID: blockID, pageSize: pageSize)
+    }
+    
+    public struct Iterator: AsyncIteratorProtocol, Sendable {
+        private let notion: Notion
+        private let blockID: String
+        private let pageSize: Int?
+        private var currentBatch: [Block] = []
+        private var nextCursor: String? = nil
+        private var finished = false
+        
+        init(notion: Notion, blockID: String, pageSize: Int?) {
+            self.notion = notion
+            self.blockID = blockID
+            self.pageSize = pageSize
+        }
+        
+        public mutating func next() async throws -> Block? {
+            while currentBatch.isEmpty && !finished {
+                let response = try await notion.getBlockChildren(id: blockID, startCursor: nextCursor, pageSize: pageSize)
+                currentBatch.append(contentsOf: response.results)
+                nextCursor = response.nextCursor
+                finished = !response.hasMore
+            }
+            return currentBatch.isEmpty ? nil : currentBatch.removeFirst()
+        }
     }
 }
 

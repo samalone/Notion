@@ -104,6 +104,32 @@ func testGetUsers() async throws {
     }
 }
 
+@Test func testGetPageContents() async throws {
+    guard let token = await Secrets.shared.get("NOTION_INTEGRATION_TOKEN") else {
+        Issue.record("Missing NOTION_INTEGRATION_TOKEN environment variable")
+        return
+    }
+
+    let pageId = "1ad4dcaa-fc44-8140-bbaf-cd8d3f957c1b"
+
+    // Create a Notion client
+    let notion = Notion(token: token)
+
+    do {
+        // Use the new BlockChildrenSequence
+        var blockCount = 0
+        for try await block in await notion.blockChildren(id: pageId) {
+            #expect(block.object == "block", "Expected object type to be 'block'")
+            #expect(!block.id.isEmpty, "Expected block to have a non-empty ID")
+            blockCount += 1
+        }
+        print("Retrieved \(blockCount) blocks from page \(pageId)")
+    }
+    catch {
+        print(error)
+    }
+}
+
 @Test func testGetBlockChildren() async throws {
     guard let token = await Secrets.shared.get("NOTION_INTEGRATION_TOKEN") else {
         Issue.record("Missing NOTION_INTEGRATION_TOKEN environment variable")
@@ -116,8 +142,11 @@ func testGetUsers() async throws {
     let notion = Notion(token: token)
 
     do {
-        // Call the getBlockChildren method
-        let blocks = try await notion.getBlockChildren(id: pageId)
+        // Use the new BlockChildrenSequence
+        var blocks: [Block] = []
+        for try await block in await notion.blockChildren(id: pageId) {
+            blocks.append(block)
+        }
 
         // Verify we received some blocks
         #expect(!blocks.isEmpty, "Expected to get at least one block")

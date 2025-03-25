@@ -30,6 +30,7 @@ public struct Block: NotionObject, Sendable, Codable {
     public let video: FileBlock?
     public let file: FileBlock?
     public let bookmark: BookmarkBlock?
+    public let childPage: ChildPageBlock?
     
     private enum CodingKeys: String, CodingKey {
         case object, id, parent, type, archived
@@ -41,6 +42,7 @@ public struct Block: NotionObject, Sendable, Codable {
         case paragraph, heading_1, heading_2, heading_3
         case bulleted_list_item, numbered_list_item, to_do, toggle
         case code, callout, quote, divider, image, video, file, bookmark
+        case child_page
     }
     
     public init(from decoder: Decoder) throws {
@@ -72,86 +74,91 @@ public struct Block: NotionObject, Sendable, Codable {
             paragraph = try container.decodeIfPresent(ParagraphBlock.self, forKey: .paragraph)
             heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .heading1:
             heading1 = try container.decodeIfPresent(HeadingBlock.self, forKey: .heading_1)
             paragraph = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .heading2:
             heading2 = try container.decodeIfPresent(HeadingBlock.self, forKey: .heading_2)
             paragraph = nil; heading1 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .heading3:
             heading3 = try container.decodeIfPresent(HeadingBlock.self, forKey: .heading_3)
             paragraph = nil; heading1 = nil; heading2 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .bulletedListItem:
             bulletedListItem = try container.decodeIfPresent(ListItemBlock.self, forKey: .bulleted_list_item)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .numberedListItem:
             numberedListItem = try container.decodeIfPresent(ListItemBlock.self, forKey: .numbered_list_item)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .toDo:
             toDo = try container.decodeIfPresent(ToDoBlock.self, forKey: .to_do)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .toggle:
             toggle = try container.decodeIfPresent(ToggleBlock.self, forKey: .toggle)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .code:
             code = try container.decodeIfPresent(CodeBlock.self, forKey: .code)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .callout:
             callout = try container.decodeIfPresent(CalloutBlock.self, forKey: .callout)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .quote:
             quote = try container.decodeIfPresent(QuoteBlock.self, forKey: .quote)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .divider:
             divider = try container.decodeIfPresent(EmptyBlock.self, forKey: .divider)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; image = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .image:
             image = try container.decodeIfPresent(FileBlock.self, forKey: .image)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; video = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         case .video:
             video = try container.decodeIfPresent(FileBlock.self, forKey: .video)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; file = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; file = nil; bookmark = nil; childPage = nil
         case .file:
             file = try container.decodeIfPresent(FileBlock.self, forKey: .file)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; bookmark = nil
+            quote = nil; divider = nil; image = nil; video = nil; bookmark = nil; childPage = nil
         case .bookmark:
             bookmark = try container.decodeIfPresent(BookmarkBlock.self, forKey: .bookmark)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil
-        default:
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; childPage = nil
+        case .childPage:
+            childPage = try container.decodeIfPresent(ChildPageBlock.self, forKey: .child_page)
             paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
             numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
             quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+        default:
+            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
+            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
+            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
         }
     }
     
@@ -241,6 +248,10 @@ public struct Block: NotionObject, Sendable, Codable {
             if let bookmark = bookmark {
                 try container.encode(bookmark, forKey: .bookmark)
             }
+        case .childPage:
+            if let childPage = childPage {
+                try container.encode(childPage, forKey: .child_page)
+            }
         default:
             break
         }
@@ -265,6 +276,7 @@ public enum BlockType: String, Sendable, Codable {
     case video
     case file
     case bookmark
+    case childPage = "child_page"
     case unsupported
 }
 
@@ -415,5 +427,14 @@ public struct BookmarkBlock: Sendable, Codable {
         let urlString = try container.decode(String.self, forKey: .url)
         url = URL(string: urlString)!
         caption = try container.decodeIfPresent([RichText].self, forKey: .caption)
+    }
+}
+
+/// Child page block content
+public struct ChildPageBlock: Sendable, Codable {
+    public let title: String
+    
+    private enum CodingKeys: String, CodingKey {
+        case title
     }
 }
