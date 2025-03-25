@@ -13,24 +13,8 @@ public struct Block: NotionObject, Sendable, Codable {
     public let archived: Bool
     public let type: BlockType
     
-    // Block content based on type
-    public let paragraph: ParagraphBlock?
-    public let heading1: HeadingBlock?
-    public let heading2: HeadingBlock?
-    public let heading3: HeadingBlock?
-    public let bulletedListItem: ListItemBlock?
-    public let numberedListItem: ListItemBlock?
-    public let toDo: ToDoBlock?
-    public let toggle: ToggleBlock?
-    public let code: CodeBlock?
-    public let callout: CalloutBlock?
-    public let quote: QuoteBlock?
-    public let divider: EmptyBlock?
-    public let image: FileBlock?
-    public let video: FileBlock?
-    public let file: FileBlock?
-    public let bookmark: BookmarkBlock?
-    public let childPage: ChildPageBlock?
+    // Single content property using enum with associated values
+    public let content: BlockContent
     
     private enum CodingKeys: String, CodingKey {
         case object, id, parent, type, archived
@@ -68,97 +52,44 @@ public struct Block: NotionObject, Sendable, Codable {
         createdBy = try container.decode(PartialUser.self, forKey: .createdBy)
         lastEditedBy = try container.decode(PartialUser.self, forKey: .lastEditedBy)
         
-        // Decode block content based on type
+        // Decode block content based on type and assign to enum
         switch type {
         case .paragraph:
-            paragraph = try container.decodeIfPresent(ParagraphBlock.self, forKey: .paragraph)
-            heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .paragraph(try container.decode(ParagraphBlock.self, forKey: .paragraph))
         case .heading1:
-            heading1 = try container.decodeIfPresent(HeadingBlock.self, forKey: .heading_1)
-            paragraph = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .heading1(try container.decode(HeadingBlock.self, forKey: .heading_1))
         case .heading2:
-            heading2 = try container.decodeIfPresent(HeadingBlock.self, forKey: .heading_2)
-            paragraph = nil; heading1 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .heading2(try container.decode(HeadingBlock.self, forKey: .heading_2))
         case .heading3:
-            heading3 = try container.decodeIfPresent(HeadingBlock.self, forKey: .heading_3)
-            paragraph = nil; heading1 = nil; heading2 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .heading3(try container.decode(HeadingBlock.self, forKey: .heading_3))
         case .bulletedListItem:
-            bulletedListItem = try container.decodeIfPresent(ListItemBlock.self, forKey: .bulleted_list_item)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .bulletedListItem(try container.decode(ListItemBlock.self, forKey: .bulleted_list_item))
         case .numberedListItem:
-            numberedListItem = try container.decodeIfPresent(ListItemBlock.self, forKey: .numbered_list_item)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .numberedListItem(try container.decode(ListItemBlock.self, forKey: .numbered_list_item))
         case .toDo:
-            toDo = try container.decodeIfPresent(ToDoBlock.self, forKey: .to_do)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .toDo(try container.decode(ToDoBlock.self, forKey: .to_do))
         case .toggle:
-            toggle = try container.decodeIfPresent(ToggleBlock.self, forKey: .toggle)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .toggle(try container.decode(ToggleBlock.self, forKey: .toggle))
         case .code:
-            code = try container.decodeIfPresent(CodeBlock.self, forKey: .code)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .code(try container.decode(CodeBlock.self, forKey: .code))
         case .callout:
-            callout = try container.decodeIfPresent(CalloutBlock.self, forKey: .callout)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .callout(try container.decode(CalloutBlock.self, forKey: .callout))
         case .quote:
-            quote = try container.decodeIfPresent(QuoteBlock.self, forKey: .quote)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .quote(try container.decode(QuoteBlock.self, forKey: .quote))
         case .divider:
-            divider = try container.decodeIfPresent(EmptyBlock.self, forKey: .divider)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .divider(try container.decode(EmptyBlock.self, forKey: .divider))
         case .image:
-            image = try container.decodeIfPresent(FileBlock.self, forKey: .image)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .image(try container.decode(FileBlock.self, forKey: .image))
         case .video:
-            video = try container.decodeIfPresent(FileBlock.self, forKey: .video)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; file = nil; bookmark = nil; childPage = nil
+            content = .video(try container.decode(FileBlock.self, forKey: .video))
         case .file:
-            file = try container.decodeIfPresent(FileBlock.self, forKey: .file)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; bookmark = nil; childPage = nil
+            content = .file(try container.decode(FileBlock.self, forKey: .file))
         case .bookmark:
-            bookmark = try container.decodeIfPresent(BookmarkBlock.self, forKey: .bookmark)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; childPage = nil
+            content = .bookmark(try container.decode(BookmarkBlock.self, forKey: .bookmark))
         case .childPage:
-            childPage = try container.decodeIfPresent(ChildPageBlock.self, forKey: .child_page)
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil
+            content = .childPage(try container.decode(ChildPageBlock.self, forKey: .child_page))
         default:
-            paragraph = nil; heading1 = nil; heading2 = nil; heading3 = nil; bulletedListItem = nil
-            numberedListItem = nil; toDo = nil; toggle = nil; code = nil; callout = nil
-            quote = nil; divider = nil; image = nil; video = nil; file = nil; bookmark = nil; childPage = nil
+            content = .unsupported
         }
     }
     
@@ -183,79 +114,67 @@ public struct Block: NotionObject, Sendable, Codable {
         try container.encode(lastEditedBy, forKey: .lastEditedBy)
         
         // Encode the appropriate content based on block type
-        switch type {
-        case .paragraph:
-            if let paragraph = paragraph {
-                try container.encode(paragraph, forKey: .paragraph)
-            }
-        case .heading1:
-            if let heading1 = heading1 {
-                try container.encode(heading1, forKey: .heading_1)
-            }
-        case .heading2:
-            if let heading2 = heading2 {
-                try container.encode(heading2, forKey: .heading_2)
-            }
-        case .heading3:
-            if let heading3 = heading3 {
-                try container.encode(heading3, forKey: .heading_3)
-            }
-        case .bulletedListItem:
-            if let bulletedListItem = bulletedListItem {
-                try container.encode(bulletedListItem, forKey: .bulleted_list_item)
-            }
-        case .numberedListItem:
-            if let numberedListItem = numberedListItem {
-                try container.encode(numberedListItem, forKey: .numbered_list_item)
-            }
-        case .toDo:
-            if let toDo = toDo {
-                try container.encode(toDo, forKey: .to_do)
-            }
-        case .toggle:
-            if let toggle = toggle {
-                try container.encode(toggle, forKey: .toggle)
-            }
-        case .code:
-            if let code = code {
-                try container.encode(code, forKey: .code)
-            }
-        case .callout:
-            if let callout = callout {
-                try container.encode(callout, forKey: .callout)
-            }
-        case .quote:
-            if let quote = quote {
-                try container.encode(quote, forKey: .quote)
-            }
-        case .divider:
-            if let divider = divider {
-                try container.encode(divider, forKey: .divider)
-            }
-        case .image:
-            if let image = image {
-                try container.encode(image, forKey: .image)
-            }
-        case .video:
-            if let video = video {
-                try container.encode(video, forKey: .video)
-            }
-        case .file:
-            if let file = file {
-                try container.encode(file, forKey: .file)
-            }
-        case .bookmark:
-            if let bookmark = bookmark {
-                try container.encode(bookmark, forKey: .bookmark)
-            }
-        case .childPage:
-            if let childPage = childPage {
-                try container.encode(childPage, forKey: .child_page)
-            }
-        default:
+        switch content {
+        case .paragraph(let value):
+            try container.encode(value, forKey: .paragraph)
+        case .heading1(let value):
+            try container.encode(value, forKey: .heading_1)
+        case .heading2(let value):
+            try container.encode(value, forKey: .heading_2)
+        case .heading3(let value):
+            try container.encode(value, forKey: .heading_3)
+        case .bulletedListItem(let value):
+            try container.encode(value, forKey: .bulleted_list_item)
+        case .numberedListItem(let value):
+            try container.encode(value, forKey: .numbered_list_item)
+        case .toDo(let value):
+            try container.encode(value, forKey: .to_do)
+        case .toggle(let value):
+            try container.encode(value, forKey: .toggle)
+        case .code(let value):
+            try container.encode(value, forKey: .code)
+        case .callout(let value):
+            try container.encode(value, forKey: .callout)
+        case .quote(let value):
+            try container.encode(value, forKey: .quote)
+        case .divider(let value):
+            try container.encode(value, forKey: .divider)
+        case .image(let value):
+            try container.encode(value, forKey: .image)
+        case .video(let value):
+            try container.encode(value, forKey: .video)
+        case .file(let value):
+            try container.encode(value, forKey: .file)
+        case .bookmark(let value):
+            try container.encode(value, forKey: .bookmark)
+        case .childPage(let value):
+            try container.encode(value, forKey: .child_page)
+        case .unsupported:
             break
         }
     }
+}
+
+/// Block content enum with associated values for each block type
+public enum BlockContent: Sendable {
+    case paragraph(ParagraphBlock)
+    case heading1(HeadingBlock)
+    case heading2(HeadingBlock)
+    case heading3(HeadingBlock)
+    case bulletedListItem(ListItemBlock)
+    case numberedListItem(ListItemBlock)
+    case toDo(ToDoBlock)
+    case toggle(ToggleBlock)
+    case code(CodeBlock)
+    case callout(CalloutBlock)
+    case quote(QuoteBlock)
+    case divider(EmptyBlock)
+    case image(FileBlock)
+    case video(FileBlock)
+    case file(FileBlock)
+    case bookmark(BookmarkBlock)
+    case childPage(ChildPageBlock)
+    case unsupported
 }
 
 /// Block types supported by Notion

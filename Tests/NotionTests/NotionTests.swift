@@ -53,8 +53,8 @@ func testGetUsers() async throws {
 @Test func testNotionAPIError() {
     // Test JSON for a Notion API error
     let errorJSON = """
-        {"object":"error","status":403,"code":"restricted_resource","message":"Insufficient permissions for this endpoint.","request_id":"c4e35d81-6853-4d36-b061-939f24e4f9c8"}
-        """.data(using: .utf8)!
+    {"object":"error","status":403,"code":"restricted_resource","message":"Insufficient permissions for this endpoint.","request_id":"c4e35d81-6853-4d36-b061-939f24e4f9c8"}
+    """.data(using: .utf8)!
 
     let decoder = JSONDecoder()
     let errorResponse = try! decoder.decode(NotionAPIError.Response.self, from: errorJSON)
@@ -88,7 +88,7 @@ func testGetUsers() async throws {
 
         // Validate that we can access some properties
         if let titleProperty = page.properties.first(where: { $0.value.type == .title })?.value,
-            let titleText = titleProperty.title?.first?.plainText
+           let titleText = titleProperty.title?.first?.plainText
         {
             print("Page title: \(titleText)")
         }
@@ -124,8 +124,7 @@ func testGetUsers() async throws {
             blockCount += 1
         }
         print("Retrieved \(blockCount) blocks from page \(pageId)")
-    }
-    catch {
+    } catch {
         print(error)
     }
 }
@@ -155,53 +154,47 @@ func testGetUsers() async throws {
         for block in blocks {
             #expect(block.object == "block", "Expected object type to be 'block'")
             #expect(!block.id.isEmpty, "Expected block to have a non-empty ID")
-            
+
             // Check that the parent refers to our page
             #expect(block.parent.type == .pageId, "Expected parent type to be page_id")
             if block.parent.type == .pageId {
                 #expect(block.parent.pageId == pageId, "Expected parent page ID to match our page ID")
             }
-            
+
             // Verify metadata fields
             #expect(block.createdTime <= Date(), "Created time should be in the past")
             #expect(block.lastEditedTime <= Date(), "Last edited time should be in the past")
             #expect(!block.createdBy.id.isEmpty, "Expected creator to have an ID")
             #expect(!block.lastEditedBy.id.isEmpty, "Expected editor to have an ID")
-            
+
             // Check type-specific data
-            switch block.type {
-            case .paragraph:
-                #expect(block.paragraph != nil, "Expected paragraph data for block type 'paragraph'")
-                if let paragraph = block.paragraph {
-                    #expect(!paragraph.richText.isEmpty, "Expected rich text content in paragraph")
-                }
-                
-            case .heading1, .heading2, .heading3:
-                if let heading = block.heading1 ?? block.heading2 ?? block.heading3 {
-                    #expect(!heading.richText.isEmpty, "Expected rich text content in heading")
+            switch block.content {
+            case .paragraph(let content):
+                #expect(!content.richText.isEmpty, "Expected rich text content in paragraph")
+
+            case .heading1(let content):
+                #expect(!content.richText.isEmpty, "Expected rich text content in heading")
+
+            case .heading2(let content):
+                #expect(!content.richText.isEmpty, "Expected rich text content in heading")
+
+            case .heading3(let content):
+                #expect(!content.richText.isEmpty, "Expected rich text content in heading")
+
+            case .bulletedListItem(let content):
+                #expect(!content.richText.isEmpty, "Expected rich text content in list item")
+
+            case .numberedListItem(let content):
+                #expect(!content.richText.isEmpty, "Expected rich text content in numbered list item")
+
+            case .image(let content):
+                #expect(!content.type.isEmpty, "Expected file block to have a type")
+                if content.type == "external" {
+                    #expect(content.external != nil, "Expected external file data")
                 } else {
-                    Issue.record("Missing heading content for heading block")
+                    #expect(content.file != nil, "Expected file data")
                 }
-                
-            case .bulletedListItem, .numberedListItem:
-                if let listItem = block.bulletedListItem ?? block.numberedListItem {
-                    #expect(!listItem.richText.isEmpty, "Expected rich text content in list item")
-                } else {
-                    Issue.record("Missing list item content for list block")
-                }
-                
-            case .image, .video, .file:
-                if let fileBlock = block.image ?? block.video ?? block.file {
-                    #expect(!fileBlock.type.isEmpty, "Expected file block to have a type")
-                    if fileBlock.type == "external" {
-                        #expect(fileBlock.external != nil, "Expected external file data")
-                    } else {
-                        #expect(fileBlock.file != nil, "Expected file data")
-                    }
-                } else {
-                    Issue.record("Missing file content for file block")
-                }
-                
+
             // Add more cases as needed for other block types
             default:
                 // For brevity, we won't check all block types in this test
@@ -211,7 +204,7 @@ func testGetUsers() async throws {
 
         // Print some debug info about the blocks (optional)
         print("Retrieved \(blocks.count) blocks from page \(pageId)")
-        
+
     } catch let error as NotionAPIError {
         if error.response.code == "object_not_found" {
             Issue.record(
