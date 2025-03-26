@@ -8,7 +8,7 @@
 
 
 // Add new AsyncSequence to iterate over block children
-public struct BlockChildrenSequence: AsyncSequence, Sendable {
+public struct BlockChildrenSequence: AsyncSequence {
     public typealias Element = Block
 
     private let notion: Notion
@@ -25,7 +25,7 @@ public struct BlockChildrenSequence: AsyncSequence, Sendable {
         Iterator(notion: notion, blockID: blockID, pageSize: pageSize)
     }
     
-    public struct Iterator: AsyncIteratorProtocol, Sendable {
+    public struct Iterator: AsyncIteratorProtocol {
         private let notion: Notion
         private let blockID: String
         private let pageSize: Int?

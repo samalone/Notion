@@ -1,8 +1,7 @@
 import Foundation
 import SwiftyJSON
 
-/// The Notion actor is responsible for managing the Notion API.
-public actor Notion {
+public class Notion {
     /// The integration token used to authenticate with the Notion API.
     private let token: String
     private let baseURL = URL(string: "https://api.notion.com/v1/")!
@@ -55,7 +54,18 @@ public actor Notion {
         }
 
         // If not an error, decode as the expected type
-        return try decoder.decode(T.self, from: data)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            // For debugging purposes only, parse the JSON as general JSON
+            // and pretty-print it.
+            if let json = try? JSON(data: data).rawString(options: .prettyPrinted)
+            {
+                print("Error decoding response: \(json)")
+            }
+
+            throw error
+        }
     }
 
     public func getUsers() async throws -> [User] {
@@ -82,7 +92,10 @@ public actor Notion {
     }
 
     public func createPage(parentId: String, title: String) async throws -> Page {
-        var json: JSON = ["parent": ["type": "page_id", "page_id": parentId], "properties": ["title": [["text": ["content": title]]]]]
+        let json: JSON = [
+            "parent": ["type": "page_id", "page_id": parentId],
+            "properties": ["title": [["text": ["content": title]]]],
+        ]
         // json["parent"]["type"].string = "page_id"
         // json["parent"]["page_id"].string = parentId
         // json["properties"]["title"].arrayObject = [["text": ["content": title]]]
@@ -91,8 +104,10 @@ public actor Notion {
         let data = try encoder.encode(json)
 
         // Debug: Pretty-print the JSON request
-        if let prettyData = try? JSONSerialization.data(withJSONObject: json.object, options: .prettyPrinted),
-           let prettyString = String(data: prettyData, encoding: .utf8) {
+        if let prettyData = try? JSONSerialization.data(
+            withJSONObject: json.object, options: .prettyPrinted),
+            let prettyString = String(data: prettyData, encoding: .utf8)
+        {
             print("API Request:\n\(prettyString)")
         }
 
@@ -135,9 +150,27 @@ public actor Notion {
     }
 
     /// Returns an AsyncSequence that lazily iterates through all children blocks
-    nonisolated public func blockChildren(id: String, pageSize: Int? = nil) -> BlockChildrenSequence
+    public func blockChildren(id: String, pageSize: Int? = nil) -> BlockChildrenSequence
     {
         BlockChildrenSequence(notion: self, blockID: id, pageSize: pageSize)
+    }
+
+    public func deleteBlock(id: String) async throws {
+        var request = try await getRequest(for: "blocks/\(id)")
+        request.httpMethod = "DELETE"
+        let (_, _) = try await URLSession.shared.data(for: request)
+    }
+
+    public func appendBlockChildren(id: String, blocks: [Block]) async throws {
+        let json: JSON = ["children": blocks.map { $0.json.object }]
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(json)
+
+        var request = try await getRequest(for: "blocks/\(id)/children")
+        request.httpMethod = "PATCH"
+        request.httpBody = data
+
+        let (_, _) = try await URLSession.shared.data(for: request)
     }
 }
 

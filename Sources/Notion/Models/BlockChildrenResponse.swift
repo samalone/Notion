@@ -1,7 +1,7 @@
 import Foundation
 
 /// Response for listing children of a block
-public struct BlockChildrenResponse: Sendable, Codable {
+public struct BlockChildrenResponse: Codable {
     /// Type of object. Always "list".
     public let object: String
     
