@@ -136,7 +136,7 @@ public struct Block: Codable, Identifiable {
             "object": "block", "type": "table",
             "table": [
                 "table_width": rows[0].count,
-                 "has_column_header": hasColumnHeader,
+                "has_column_header": hasColumnHeader,
                 "has_row_header": hasRowHeader,
                 "children": JSON(rowsJson),
             ],

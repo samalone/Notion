@@ -38,30 +38,13 @@ public class Notion {
 
     /// Processes API response data and checks for error responses
     private func processAPIResponse<T: Decodable>(data: Data) throws -> T {
-        // Debug: Pretty-print the JSON response
-        // if let jsonObject = try? JSONSerialization.jsonObject(with: data),
-        //    let prettyData = try? JSONSerialization.data(withJSONObject: jsonObject, options: .prettyPrinted),
-        //    let prettyString = String(data: prettyData, encoding: .utf8) {
-        //     print("API Response:\n\(prettyString)")
-        // }
-
         let decoder = JSONDecoder()
 
         // Check if the response is an error
         try throwIfError(data: data)
 
         // If not an error, decode as the expected type
-        do {
-            return try decoder.decode(T.self, from: data)
-        } catch {
-            // For debugging purposes only, parse the JSON as general JSON
-            // and pretty-print it.
-            if let json = try? JSON(data: data).rawString(options: .prettyPrinted) {
-                print("Error decoding response: \(json)")
-            }
-
-            throw error
-        }
+        return try decoder.decode(T.self, from: data)
     }
 
     private func throwIfError(data: Data) throws {
@@ -75,16 +58,7 @@ public class Notion {
 
     public func getUsers() async throws -> [User] {
         let request = try await getRequest(for: "users")
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        if let httpResponse = response as? HTTPURLResponse,
-            !(200...299).contains(httpResponse.statusCode)
-        {
-            // For debugging purposes only
-            if let json = String(data: data, encoding: .utf8) {
-                print("Error response: \(json)")
-            }
-        }
+        let (data, _) = try await URLSession.shared.data(for: request)
 
         let listResponse: ListResponse<User> = try processAPIResponse(data: data)
         return listResponse.results
@@ -108,14 +82,6 @@ public class Notion {
         let encoder = JSONEncoder()
         let data = try encoder.encode(json)
 
-        // Debug: Pretty-print the JSON request
-        if let prettyData = try? JSONSerialization.data(
-            withJSONObject: json.object, options: .prettyPrinted),
-            let prettyString = String(data: prettyData, encoding: .utf8)
-        {
-            print("API Request:\n\(prettyString)")
-        }
-
         var request = try await getRequest(for: "pages")
         request.httpMethod = "POST"
         request.httpBody = data
@@ -137,16 +103,7 @@ public class Notion {
 
         let request = try await getRequest(
             for: "blocks/\(id)/children", queryItems: queryItems.isEmpty ? nil : queryItems)
-        let (data, response) = try await URLSession.shared.data(for: request)
-
-        if let httpResponse = response as? HTTPURLResponse,
-            !(200...299).contains(httpResponse.statusCode)
-        {
-            // For debugging purposes only
-            if let json = String(data: data, encoding: .utf8) {
-                print("Error response: \(json)")
-            }
-        }
+        let (data, _) = try await URLSession.shared.data(for: request)
 
         let listResponse: ListResponse<Block> = try processAPIResponse(data: data)
         return BlockChildrenResponse(

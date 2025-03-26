@@ -103,17 +103,12 @@ func testGetUsers() async throws {
     // Create a Notion client
     let notion = Notion(token: token)
 
-    do {
-        // Use the new BlockChildrenSequence
-        var blockCount = 0
-        for try await block in notion.blockChildren(id: pageId) {
-            #expect(block.object == "block", "Expected object type to be 'block'")
-            #expect(!block.id.isEmpty, "Expected block to have a non-empty ID")
-            blockCount += 1
-        }
-        print("Retrieved \(blockCount) blocks from page \(pageId)")
-    } catch {
-        print(error)
+    // Use the new BlockChildrenSequence
+    var blockCount = 0
+    for try await block in notion.blockChildren(id: pageId) {
+        #expect(block.object == "block", "Expected object type to be 'block'")
+        #expect(!block.id.isEmpty, "Expected block to have a non-empty ID")
+        blockCount += 1
     }
 }
 
@@ -143,10 +138,6 @@ func testGetUsers() async throws {
             #expect(block.object == "block", "Expected object type to be 'block'")
             #expect(!block.id.isEmpty, "Expected block to have a non-empty ID")
         }
-
-        // Print some debug info about the blocks (optional)
-        print("Retrieved \(blocks.count) blocks from page \(pageId)")
-
     } catch let error as NotionAPIError {
         if error.response.code == "object_not_found" {
             Issue.record(
@@ -160,33 +151,32 @@ func testGetUsers() async throws {
 
 @Test func testBlockIO() throws {
     let json = """
-    {
-      "has_children" : true,
-      "type" : "child_page",
-      "archived" : false,
-      "id" : "f9aa6fef-3bd2-4fc8-ad48-a764b8190b69",
-      "created_by" : {
-        "object" : "user",
-        "id" : "d3d159f1-29b5-4a6a-ad08-fb46535ba381"
-      },
-      "last_edited_time" : "2024-07-10T16:42:00.000Z",
-      "object" : "block",
-      "last_edited_by" : {
-        "object" : "user",
-        "id" : "0aa39b50-3d96-4c27-bc65-a99645a2411c"
-      },
-      "parent" : {
-        "page_id" : "222d1185-d9d4-400d-9f8d-0033be231409",
-        "type" : "page_id"
-      },
-      "in_trash" : false,
-      "child_page" : {
-        "title" : "April 2024"
-      },
-      "created_time" : "2024-04-26T13:00:00.000Z"
-    }
-    """.data(using: .utf8)!
+        {
+          "has_children" : true,
+          "type" : "child_page",
+          "archived" : false,
+          "id" : "f9aa6fef-3bd2-4fc8-ad48-a764b8190b69",
+          "created_by" : {
+            "object" : "user",
+            "id" : "d3d159f1-29b5-4a6a-ad08-fb46535ba381"
+          },
+          "last_edited_time" : "2024-07-10T16:42:00.000Z",
+          "object" : "block",
+          "last_edited_by" : {
+            "object" : "user",
+            "id" : "0aa39b50-3d96-4c27-bc65-a99645a2411c"
+          },
+          "parent" : {
+            "page_id" : "222d1185-d9d4-400d-9f8d-0033be231409",
+            "type" : "page_id"
+          },
+          "in_trash" : false,
+          "child_page" : {
+            "title" : "April 2024"
+          },
+          "created_time" : "2024-04-26T13:00:00.000Z"
+        }
+        """.data(using: .utf8)!
     let decoder = JSONDecoder()
-    let block: Block = try decoder.decode(Block.self, from: json)
-    print(block.json.rawString(options: .prettyPrinted)!)
+    _ = try decoder.decode(Block.self, from: json)
 }

@@ -167,8 +167,6 @@ func getNotion() async -> Notion {
             ["Row 2, Column 1", "Row 2, Column 2", "Row 2, Column 3"],
         ], hasColumnHeader: true)
 
-    print(table.json.rawString(options: .prettyPrinted) ?? "")
-
     try await notion.appendBlockChildren(id: monthPage, blocks: [.heading1("Results"), table])
 }
 
