@@ -1,70 +1,28 @@
 import Foundation
+import SwiftyJSON
 
 /// Represents a Notion page
-public struct Page: NotionObject, Sendable, Codable {
-    public let object: String
-    public let id: String
-    public let createdTime: Date
-    public let lastEditedTime: Date
-    public let createdBy: PartialUser
-    public let lastEditedBy: PartialUser
-    public let cover: Cover?
-    public let icon: Icon?
-    public let parent: Parent
-    public let archived: Bool
-    public let properties: [String: PageProperty]
-    public let url: URL
-    public let publicURL: URL?
-    
-    private enum CodingKeys: String, CodingKey {
-        case object, id, cover, icon, parent, archived, properties, url
-        case createdTime = "created_time"
-        case lastEditedTime = "last_edited_time"
-        case createdBy = "created_by"
-        case lastEditedBy = "last_edited_by"
-        case publicURL = "public_url"
+public struct Page: Codable, Identifiable {
+    var json: JSON
+
+    init(json: JSON) {
+        self.json = json
     }
-    
+
     public init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        
-        object = try container.decode(String.self, forKey: .object)
-        id = try container.decode(String.self, forKey: .id)
-        
-        // Parse dates
-        let dateFormatter = ISO8601DateFormatter()
-        dateFormatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-        
-        let createdTimeString = try container.decode(String.self, forKey: .createdTime)
-        if let date = dateFormatter.date(from: createdTimeString) {
-            createdTime = date
-        } else {
-            throw DecodingError.dataCorruptedError(forKey: .createdTime, in: container, debugDescription: "Invalid date format")
+        self.json = try JSON(from: decoder)
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        try json.encode(to: encoder)
+    }
+
+    public var id: String {
+        get {
+            return json["id"].stringValue
         }
-        
-        let lastEditedTimeString = try container.decode(String.self, forKey: .lastEditedTime)
-        if let date = dateFormatter.date(from: lastEditedTimeString) {
-            lastEditedTime = date
-        } else {
-            throw DecodingError.dataCorruptedError(forKey: .lastEditedTime, in: container, debugDescription: "Invalid date format")
-        }
-        
-        createdBy = try container.decode(PartialUser.self, forKey: .createdBy)
-        lastEditedBy = try container.decode(PartialUser.self, forKey: .lastEditedBy)
-        cover = try container.decodeIfPresent(Cover.self, forKey: .cover)
-        icon = try container.decodeIfPresent(Icon.self, forKey: .icon)
-        parent = try container.decode(Parent.self, forKey: .parent)
-        archived = try container.decode(Bool.self, forKey: .archived)
-        properties = try container.decode([String: PageProperty].self, forKey: .properties)
-        
-        let urlString = try container.decode(String.self, forKey: .url)
-        url = URL(string: urlString)!
-        
-        if let publicURLString = try container.decodeIfPresent(String.self, forKey: .publicURL),
-           let publicURL = URL(string: publicURLString) {
-            self.publicURL = publicURL
-        } else {
-            publicURL = nil
+        set {
+            json["id"].stringValue = newValue
         }
     }
 }

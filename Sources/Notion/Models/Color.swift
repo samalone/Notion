@@ -1,27 +1,4 @@
-/*
-- "blue"
-- "blue_background"
-- "brown"
-- "brown_background"
-- "default"
-- "gray"
-- "gray_background"
-- "green"
-- "green_background"
-- "orange"
-- "orange_background"
-- "yellow"
-- "green"
-- "pink"
-- "pink_background"
-- "purple"
-- "purple_background"
-- "red"
-- "red_background"
-- "yellow_background"
-*/
-
-enum Color: String {
+enum Color: String, Codable, Sendable {
     case blue
     case blueBackground = "blue_background"
     case brown

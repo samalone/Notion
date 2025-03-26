@@ -53,32 +53,32 @@ public struct Block: Codable, Identifiable {
         }
     }
 
-    static func paragraph(_ text: String, color: Color? = nil) -> Block {
-        var json: JSON = ["object": "block", "type": "paragraph", "paragraph": ["rich_text": [["type": "text", "text": ["content": text]]]]]
+    static func paragraph(_ text: RichText, color: Color? = nil) -> Block {
+        var json: JSON = ["object": "block", "type": "paragraph", "paragraph": ["rich_text": [text.json]]]
         if let color = color {
             json["paragraph"]["color"].stringValue = color.rawValue
         }
         return Block(json: json)
     }
 
-    static func heading1(_ text: String, color: Color? = nil) -> Block {
-        var json: JSON = ["object": "block", "type": "heading_1", "heading_1": ["rich_text": [["type": "text", "text": ["content": text]]]]]
+    static func heading1(_ text: RichText, color: Color? = nil) -> Block {
+        var json: JSON = ["object": "block", "type": "heading_1", "heading_1": ["rich_text": [text.json]]]
         if let color = color {
             json["heading_1"]["color"].stringValue = color.rawValue
         }
         return Block(json: json)
     }
 
-    static func heading2(_ text: String, color: Color? = nil) -> Block {
-        var json: JSON = ["object": "block", "type": "heading_2", "heading_2": ["rich_text": [["type": "text", "text": ["content": text]]]]]
+    static func heading2(_ text: RichText, color: Color? = nil) -> Block {
+        var json: JSON = ["object": "block", "type": "heading_2", "heading_2": ["rich_text": [text.json]]]
         if let color = color {
             json["heading_2"]["color"].stringValue = color.rawValue
         }
         return Block(json: json)
     }
 
-    static func heading3(_ text: String, color: Color? = nil) -> Block {
-        var json: JSON = ["object": "block", "type": "heading_3", "heading_3": ["rich_text": [["type": "text", "text": ["content": text]]]]]
+    static func heading3(_ text: RichText, color: Color? = nil) -> Block {
+        var json: JSON = ["object": "block", "type": "heading_3", "heading_3": ["rich_text": [text.json]]]
         if let color = color {
             json["heading_3"]["color"].stringValue = color.rawValue
         }

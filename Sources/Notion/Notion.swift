@@ -47,11 +47,7 @@ public class Notion {
         let decoder = JSONDecoder()
 
         // Check if the response is an error
-        if let errorResponse = try? decoder.decode(NotionAPIError.Response.self, from: data),
-            errorResponse.object == "error"
-        {
-            throw NotionAPIError(response: errorResponse)
-        }
+        try throwIfError(data: data)
 
         // If not an error, decode as the expected type
         do {
@@ -59,12 +55,20 @@ public class Notion {
         } catch {
             // For debugging purposes only, parse the JSON as general JSON
             // and pretty-print it.
-            if let json = try? JSON(data: data).rawString(options: .prettyPrinted)
-            {
+            if let json = try? JSON(data: data).rawString(options: .prettyPrinted) {
                 print("Error decoding response: \(json)")
             }
 
             throw error
+        }
+    }
+
+    private func throwIfError(data: Data) throws {
+        let decoder = JSONDecoder()
+        if let errorResponse = try? decoder.decode(NotionAPIError.Response.self, from: data),
+            errorResponse.object == "error"
+        {
+            throw NotionAPIError(response: errorResponse)
         }
     }
 
@@ -150,8 +154,7 @@ public class Notion {
     }
 
     /// Returns an AsyncSequence that lazily iterates through all children blocks
-    public func blockChildren(id: String, pageSize: Int? = nil) -> BlockChildrenSequence
-    {
+    public func blockChildren(id: String, pageSize: Int? = nil) -> BlockChildrenSequence {
         BlockChildrenSequence(notion: self, blockID: id, pageSize: pageSize)
     }
 
@@ -161,7 +164,9 @@ public class Notion {
         let (_, _) = try await URLSession.shared.data(for: request)
     }
 
-    public func appendBlockChildren(id: String, blocks: [Block]) async throws {
+    @discardableResult
+    public func appendBlockChildren(id: String, blocks: [Block]) async throws -> ListResponse<Block>
+    {
         let json: JSON = ["children": blocks.map { $0.json.object }]
         let encoder = JSONEncoder()
         let data = try encoder.encode(json)
@@ -170,7 +175,9 @@ public class Notion {
         request.httpMethod = "PATCH"
         request.httpBody = data
 
-        let (_, _) = try await URLSession.shared.data(for: request)
+        let (response, _) = try await URLSession.shared.data(for: request)
+
+        return try processAPIResponse(data: response)
     }
 }
 

@@ -54,7 +54,7 @@ extension Notion {
             Block.heading2("Heading 2"),
             Block.heading3("Heading 3"),
             Block.paragraph("Paragraph 1"),
-            Block.paragraph("Paragraph 2", color: .red),
+            Block.paragraph(RichText("Paragraph 2").italic().color(.gray))
         ])
     }
 }
