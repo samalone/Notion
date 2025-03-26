@@ -3,9 +3,10 @@ import SwiftyJSON
 
 public class Notion {
     /// The integration token used to authenticate with the Notion API.
+    private static let baseURL = URL(string: "https://api.notion.com/v1/")!
+    private static let apiVersion = "2022-06-28"
+
     private let token: String
-    private let baseURL = URL(string: "https://api.notion.com/v1/")!
-    private let apiVersion = "2022-06-28"
 
     init(token: String) {
         self.token = token
@@ -16,7 +17,7 @@ public class Notion {
         -> URLRequest
     {
         var components = URLComponents(
-            url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: true)!
+            url: Notion.baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: true)!
 
         if let queryItems = queryItems, !queryItems.isEmpty {
             components.queryItems = queryItems.map { URLQueryItem(name: $0.key, value: $0.value) }
@@ -31,7 +32,7 @@ public class Notion {
         var request = URLRequest(url: url)
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.setValue(apiVersion, forHTTPHeaderField: "Notion-Version")
+        request.setValue(Notion.apiVersion, forHTTPHeaderField: "Notion-Version")
         return request
     }
 

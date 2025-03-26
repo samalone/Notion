@@ -8,6 +8,10 @@ struct RichText: Codable, ExpressibleByStringLiteral {
         self.json = json
     }
 
+    init(_ text: String) {
+        self.json = JSON(["type": "text", "text": ["content": text]])
+    }
+
     init(stringLiteral value: StringLiteralType) {
         self.json = JSON(["type": "text", "text": ["content": value]])
     }
