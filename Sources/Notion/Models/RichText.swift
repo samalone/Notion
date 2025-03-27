@@ -1,7 +1,7 @@
 import Foundation
 import SwiftyJSON
 
-public struct RichText: Codable, ExpressibleByStringLiteral {
+public struct RichText: Codable, Sendable, ExpressibleByStringLiteral {
     var json: JSON
 
     init(json: JSON) {
@@ -9,11 +9,11 @@ public struct RichText: Codable, ExpressibleByStringLiteral {
     }
 
     public init(_ text: String) {
-        self.json = JSON(["type": "text", "text": ["content": text]])
+        self.json = ["type": "text", "text": ["content": text]]
     }
 
     public init(stringLiteral value: StringLiteralType) {
-        self.json = JSON(["type": "text", "text": ["content": value]])
+        self.json = ["type": "text", "text": ["content": value]]
     }
 
     public init(from decoder: Decoder) throws {
@@ -25,14 +25,14 @@ public struct RichText: Codable, ExpressibleByStringLiteral {
     }
 
     func italic() throws -> RichText {
-        return RichText(json: try self.json.merged(with: JSON(["annotations": ["italic": true]])))
+        return RichText(json: self.json.merging(["annotations": ["italic": true]]))
     }
 
     func bold() throws -> RichText {
-        return RichText(json: try json.merged(with: JSON(["annotations": ["bold": true]])))
+        return RichText(json: json.merging(["annotations": ["bold": true]]))
     }
 
     func color(_ color: Color) throws -> RichText {
-        return RichText(json: try json.merged(with: JSON(["annotations": ["color": color.rawValue]])))
+        return RichText(json: json.merging(["annotations": ["color": color.rawValue]]))
     }
 }

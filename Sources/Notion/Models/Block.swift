@@ -1,10 +1,9 @@
 import Foundation
-import SwiftyJSON
 
 /// Represents a Notion block
 /// This is such a complex type that we don't try to map it to a Swift type,
 /// but instead we use SwiftyJSON to parse the JSON and provide access to the data.
-public struct Block: Codable, Identifiable {
+public struct Block: Codable, Sendable, Identifiable {
     var json: JSON
 
     init(json: JSON) {
@@ -16,7 +15,7 @@ public struct Block: Codable, Identifiable {
     }
 
     func data() throws -> Data {
-        return try json.rawData()
+        return try json.data()
     }
 
     public init(from decoder: Decoder) throws {
@@ -30,9 +29,6 @@ public struct Block: Codable, Identifiable {
     public var id: String {
         get {
             return json["id"].stringValue
-        }
-        set {
-            json["id"].stringValue = newValue
         }
     }
 
@@ -51,16 +47,8 @@ public struct Block: Codable, Identifiable {
     }
 
     public var childPageTitle: String? {
-        get {
             guard json["type"].stringValue == "child_page" else { return nil }
             return json["child_page"]["title"].stringValue
-        }
-        set {
-            if let newValue {
-                json["type"].stringValue = "child_page"
-                json["child_page"]["title"].stringValue = newValue
-            }
-        }
     }
 
     public static func paragraph(_ text: RichText, color: Color? = nil) -> Block {
@@ -68,7 +56,7 @@ public struct Block: Codable, Identifiable {
             "object": "block", "type": "paragraph", "paragraph": ["rich_text": [text.json]],
         ]
         if let color = color {
-            json["paragraph"]["color"].stringValue = color.rawValue
+            json = json.merging(["paragraph": ["color": color.rawValue]])
         }
         return Block(json: json)
     }
@@ -82,7 +70,7 @@ public struct Block: Codable, Identifiable {
             "object": "block", "type": "heading_1", "heading_1": ["rich_text": [text.json]],
         ]
         if let color = color {
-            json["heading_1"]["color"].stringValue = color.rawValue
+            json = json.merging(["heading_1": ["color": color.rawValue]])
         }
         return Block(json: json)
     }
@@ -96,7 +84,7 @@ public struct Block: Codable, Identifiable {
             "object": "block", "type": "heading_2", "heading_2": ["rich_text": [text.json]],
         ]
         if let color = color {
-            json["heading_2"]["color"].stringValue = color.rawValue
+            json = json.merging(["heading_2": ["color": color.rawValue]])
         }
         return Block(json: json)
     }
@@ -110,7 +98,7 @@ public struct Block: Codable, Identifiable {
             "object": "block", "type": "heading_3", "heading_3": ["rich_text": [text.json]],
         ]
         if let color = color {
-            json["heading_3"]["color"].stringValue = color.rawValue
+            json = json.merging(["heading_3": ["color": color.rawValue]])
         }
         return Block(json: json)
     }
@@ -129,11 +117,12 @@ public struct Block: Codable, Identifiable {
             for cell in row {
                 cellsJson.append([cell.json])
             }
-            rowJson["table_row"] = JSON(["cells": cellsJson])
+            rowJson = rowJson.merging(["table_row": ["cells": cellsJson]])
             rowsJson.append(rowJson)
         }
-        var json: JSON = [
-            "object": "block", "type": "table",
+        let json: JSON = [
+            "object": "block",
+            "type": "table",
             "table": [
                 "table_width": rows[0].count,
                 "has_column_header": hasColumnHeader,

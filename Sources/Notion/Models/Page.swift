@@ -2,7 +2,7 @@ import Foundation
 import SwiftyJSON
 
 /// Represents a Notion page
-public struct Page: Codable, Identifiable {
+public struct Page: Codable, Sendable, Identifiable {
     var json: JSON
 
     init(json: JSON) {
@@ -18,12 +18,7 @@ public struct Page: Codable, Identifiable {
     }
 
     public var id: String {
-        get {
-            return json["id"].stringValue
-        }
-        set {
-            json["id"].stringValue = newValue
-        }
+        return json["id"].stringValue
     }
 }
 

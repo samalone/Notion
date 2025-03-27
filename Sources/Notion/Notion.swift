@@ -122,7 +122,7 @@ public struct Notion: Sendable {
     @discardableResult
     public func appendBlockChildren(id: String, blocks: [Block]) async throws -> ListResponse<Block>
     {
-        let json: JSON = ["children": blocks.map { $0.json.object }]
+        let json: JSON = ["children": blocks.map { $0.json }]
         let encoder = JSONEncoder()
         let data = try encoder.encode(json)
 

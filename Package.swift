@@ -17,15 +17,11 @@ let package = Package(
             name: "Notion",
             targets: ["Notion"])
     ],
-    dependencies: [
-        .package(url: "https://github.com/SwiftyJSON/SwiftyJSON.git", from: "4.0.0")
-    ],
     targets: [
         // Targets are the basic building blocks of a package, defining a module or a test suite.
         // Targets can depend on other targets in this package and products from dependencies.
         .target(
-            name: "Notion",
-            dependencies: ["SwiftyJSON"]),
+            name: "Notion"),
         .testTarget(
             name: "NotionTests",
             dependencies: ["Notion"]

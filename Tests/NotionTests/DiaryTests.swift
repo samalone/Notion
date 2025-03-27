@@ -79,6 +79,9 @@ extension Notion {
         timeFormat.timeStyle = .short
         let time = timeFormat.string(from: Date())
 
+        let blocks = [Block.heading2(time)]
+        print(blocks.prettyPrinted)
+
         try await appendBlockChildren(id: monthPage, blocks: [.heading2(time)])
     }
 
@@ -137,8 +140,11 @@ extension Notion {
             "\(durationHours):\(String(durationMinutesPart).padding(toLength: 2, withPad: "0", startingAt: 0))"
         let endText = "Ended at \(time) (duration \(durationText))"
 
-        try await appendBlockChildren(
-            id: monthPageId, blocks: [.paragraph(RichText(endText).italic().color(.gray))])
+        let blocks = try [Block.paragraph(RichText(endText).italic().color(.gray))]
+
+        print(blocks.prettyPrinted)
+
+        try await appendBlockChildren(id: monthPageId, blocks: blocks)
     }
 }
 
