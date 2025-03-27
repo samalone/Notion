@@ -7,7 +7,7 @@
 
 
 /// Response wrapper for paginated lists of objects
-public struct ListResponse<T: Codable>: Codable {
+public struct ListResponse<T: Codable>: Codable, @unchecked Sendable {
     public let object: String
     public let results: [T]
     public let nextCursor: String?

@@ -1,14 +1,14 @@
 import Foundation
 import SwiftyJSON
 
-public class Notion {
+public struct Notion: Sendable {
     /// The integration token used to authenticate with the Notion API.
     private static let baseURL = URL(string: "https://api.notion.com/v1/")!
     private static let apiVersion = "2022-06-28"
 
     private let token: String
 
-    init(token: String) {
+    public init(token: String) {
         self.token = token
     }
 
@@ -38,18 +38,15 @@ public class Notion {
 
     /// Processes API response data and checks for error responses
     private func processAPIResponse<T: Decodable>(data: Data) throws -> T {
-        let decoder = JSONDecoder()
-
         // Check if the response is an error
         try throwIfError(data: data)
 
         // If not an error, decode as the expected type
-        return try decoder.decode(T.self, from: data)
+        return try JSONDecoder().decode(T.self, from: data)
     }
 
     private func throwIfError(data: Data) throws {
-        let decoder = JSONDecoder()
-        if let errorResponse = try? decoder.decode(NotionAPIError.Response.self, from: data),
+        if let errorResponse = try? JSONDecoder().decode(NotionAPIError.Response.self, from: data),
             errorResponse.object == "error"
         {
             throw NotionAPIError(response: errorResponse)

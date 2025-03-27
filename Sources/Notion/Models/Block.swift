@@ -63,7 +63,7 @@ public struct Block: Codable, Identifiable {
         }
     }
 
-    static func paragraph(_ text: RichText, color: Color? = nil) -> Block {
+    public static func paragraph(_ text: RichText, color: Color? = nil) -> Block {
         var json: JSON = [
             "object": "block", "type": "paragraph", "paragraph": ["rich_text": [text.json]],
         ]
@@ -73,11 +73,11 @@ public struct Block: Codable, Identifiable {
         return Block(json: json)
     }
 
-    static func paragraph(_ text: String, color: Color? = nil) -> Block {
+    public static func paragraph(_ text: String, color: Color? = nil) -> Block {
         return paragraph(RichText(stringLiteral: text), color: color)
     }
 
-    static func heading1(_ text: RichText, color: Color? = nil) -> Block {
+    public static func heading1(_ text: RichText, color: Color? = nil) -> Block {
         var json: JSON = [
             "object": "block", "type": "heading_1", "heading_1": ["rich_text": [text.json]],
         ]
@@ -87,11 +87,11 @@ public struct Block: Codable, Identifiable {
         return Block(json: json)
     }
 
-    static func heading1(_ text: String, color: Color? = nil) -> Block {
+    public static func heading1(_ text: String, color: Color? = nil) -> Block {
         return heading1(RichText(stringLiteral: text), color: color)
     }
 
-    static func heading2(_ text: RichText, color: Color? = nil) -> Block {
+    public static func heading2(_ text: RichText, color: Color? = nil) -> Block {
         var json: JSON = [
             "object": "block", "type": "heading_2", "heading_2": ["rich_text": [text.json]],
         ]
@@ -101,11 +101,11 @@ public struct Block: Codable, Identifiable {
         return Block(json: json)
     }
 
-    static func heading2(_ text: String, color: Color? = nil) -> Block {
+    public static func heading2(_ text: String, color: Color? = nil) -> Block {
         return heading2(RichText(stringLiteral: text), color: color)
     }
 
-    static func heading3(_ text: RichText, color: Color? = nil) -> Block {
+    public static func heading3(_ text: RichText, color: Color? = nil) -> Block {
         var json: JSON = [
             "object": "block", "type": "heading_3", "heading_3": ["rich_text": [text.json]],
         ]
@@ -115,11 +115,11 @@ public struct Block: Codable, Identifiable {
         return Block(json: json)
     }
 
-    static func heading3(_ text: String, color: Color? = nil) -> Block {
+    public static func heading3(_ text: String, color: Color? = nil) -> Block {
         return heading3(RichText(stringLiteral: text), color: color)
     }
 
-    static func table(rows: [[RichText]], hasColumnHeader: Bool = false, hasRowHeader: Bool = false)
+    public static func table(rows: [[RichText]], hasColumnHeader: Bool = false, hasRowHeader: Bool = false)
         -> Block
     {
         var rowsJson: [JSON] = []

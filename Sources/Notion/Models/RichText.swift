@@ -1,26 +1,26 @@
 import Foundation
 import SwiftyJSON
 
-struct RichText: Codable, ExpressibleByStringLiteral {
+public struct RichText: Codable, ExpressibleByStringLiteral {
     var json: JSON
 
     init(json: JSON) {
         self.json = json
     }
 
-    init(_ text: String) {
+    public init(_ text: String) {
         self.json = JSON(["type": "text", "text": ["content": text]])
     }
 
-    init(stringLiteral value: StringLiteralType) {
+    public init(stringLiteral value: StringLiteralType) {
         self.json = JSON(["type": "text", "text": ["content": value]])
     }
 
-    init(from decoder: Decoder) throws {
+    public init(from decoder: Decoder) throws {
         self.json = try JSON(from: decoder)
     }
 
-    func encode(to encoder: Encoder) throws {
+    public func encode(to encoder: Encoder) throws {
         try json.encode(to: encoder)
     }
 

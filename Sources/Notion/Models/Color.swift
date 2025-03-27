@@ -1,4 +1,4 @@
-enum Color: String, Codable, Sendable {
+public enum Color: String, Codable, Sendable {
     case blue
     case blueBackground = "blue_background"
     case brown

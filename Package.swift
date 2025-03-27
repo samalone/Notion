@@ -7,7 +7,7 @@ let package = Package(
     name: "Notion",
     platforms: [
         .macOS(.v12),
-        .iOS(.v15),
+        .iOS(.v16),
         .watchOS(.v8),
         .tvOS(.v15),
     ],
