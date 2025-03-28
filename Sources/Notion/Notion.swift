@@ -1,5 +1,4 @@
 import Foundation
-import SwiftyJSON
 
 public struct Notion: Sendable {
     /// The integration token used to authenticate with the Notion API.

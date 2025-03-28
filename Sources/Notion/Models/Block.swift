@@ -1,8 +1,6 @@
 import Foundation
 
 /// Represents a Notion block
-/// This is such a complex type that we don't try to map it to a Swift type,
-/// but instead we use SwiftyJSON to parse the JSON and provide access to the data.
 public struct Block: Codable, Sendable, Identifiable {
     var json: JSON
 

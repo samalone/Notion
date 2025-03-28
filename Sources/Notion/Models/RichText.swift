@@ -1,5 +1,4 @@
 import Foundation
-import SwiftyJSON
 
 public struct RichText: Codable, Sendable, ExpressibleByStringLiteral {
     var json: JSON

@@ -1,5 +1,4 @@
 import Foundation
-import SwiftyJSON
 
 /// Represents a Notion page
 public struct Page: Codable, Sendable, Identifiable {
