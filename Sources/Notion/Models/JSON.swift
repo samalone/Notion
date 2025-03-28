@@ -38,22 +38,6 @@ extension Optional: JSONType where Wrapped: JSONType {
     // An optional is JSON if its wrapped type is JSON.
 }
 
-struct JSONNull: JSONType {
-    // A JSON null value that represents the literal "null" in JSON.
-
-    // Singleton instance for efficiency
-    static let null = JSONNull()
-
-    // Custom encoding to ensure it's encoded as the literal "null" in JSON
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.singleValueContainer()
-        try container.encodeNil()
-    }
-
-    // No custom init(from:) needed - Swift's decoder automatically handles this
-    // when decodeNil() is true in the JSON struct's initializer
-}
-
 // To allow subscripting both dictionaries and arrays, we need to define a
 // protocol that allows for subscripting with both strings and integers.
 public enum JSONSubscript {
@@ -73,157 +57,215 @@ extension JSONSubscript: ExpressibleByStringLiteral, ExpressibleByIntegerLiteral
     }
 }
 
-// To represent arbitrary JSON values, we also need a type-erased JSON type.
-// This type is a JSON value that can be any JSON type, and it can be used to
-// represent JSON values of unknown type.
+// The JSON enum represents a JSON value. It can be a string, integer, double,
+// boolean, array, dictionary, or null value. It conforms to JSONType, which
+// allows it to be used in place of any JSON value. It also conforms to
+// ExpressibleByArrayLiteral and ExpressibleByDictionaryLiteral, which allows
+// for easy initialization of JSON arrays and dictionaries.
 
-public struct JSON: JSONType, ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
-    // A type-erased JSON value.
-    private let value: JSONType
-
-    // Clients should use JSON.wrap() instead of calling this constructor directly.
-    private init(_ value: JSONType) {
-        self.value = value
-    }
-
-    static func wrap(_ value: Any) -> JSON {
-        switch value {
-        case let value as JSON:
-            return value
-        case let value as JSONType:
-            return JSON(value)
-        case let value as [Any]:
-            return JSON(value.map { JSON.wrap($0) })
-        case let value as [String: Any]:
-            return JSON(value.mapValues { JSON.wrap($0) })
-        default:
-            fatalError("Unsupported JSON type: \(type(of: value))")
-        }
-    }
-
-    // Add explicit initializers for collections of JSONType
-    public init(_ value: [String: JSONType]) {
-        // Wrap each value in the dictionary with JSON to handle existential types
-        let wrappedDict = value.mapValues { JSON.wrap($0) }
-        self.value = wrappedDict
-    }
-
-    public init(_ value: [JSONType]) {
-        // Wrap each element in the array with JSON to handle existential types
-        let wrappedArray = value.map { JSON.wrap($0) }
-        self.value = wrappedArray
-    }
-
-    public init(data: Data) throws {
-        self.value = try JSONDecoder().decode(JSON.self, from: data).value
-    }
-
-    public init(arrayLiteral elements: JSONType...) {
-        self.value = elements.map { JSON.wrap($0) }
-    }
-
-    // public init(dictionaryLiteral elements: (String, JSONType)...) {
-    //     self.value = Dictionary(uniqueKeysWithValues: elements.map {($0.0, JSON($0.1))})
-    // }
-
-    // For ease-of-use, we need to accept dictionary literals of type [String: Any],
-    // which is what Swift creates when the values are of different types.
-    // This constructor will fail if the values are not JSONType.
-    public init(dictionaryLiteral elements: (String, Any)...) {
-        self.value = Dictionary(uniqueKeysWithValues: elements.map { ($0.0, JSON.wrap($0.1)) })
-    }
-
-    public func data() throws -> Data {
-        try JSONEncoder().encode(self)
-    }
-
-    public func encode(to encoder: Encoder) throws {
-        try value.encode(to: encoder)
-    }
-
-    public var stringValue: String {
-        (value as? String) ?? (value as? Int).map { String($0) } ?? (value as? Double).map {
-            String($0)
-        } ?? (value as? Bool).map { String($0) } ?? ""
-    }
-
-    public var arrayValue: [JSON] {
-        (value as? [JSON]) ?? []
-    }
-
-    public var boolValue: Bool {
-        (value as? Bool) ?? false
-    }
+public enum JSON: JSONType, ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral {
+    case string(String)
+    case int(Int)
+    case double(Double)
+    case bool(Bool)
+    case array([JSON])
+    case dictionary([String: JSON])
+    case null
 
     public init(from decoder: Decoder) throws {
         let container = try decoder.singleValueContainer()
         if let value = try? container.decode(String.self) {
-            self.value = value
+            self = .string(value)
         } else if let value = try? container.decode(Int.self) {
-            self.value = value
+            self = .int(value)
         } else if let value = try? container.decode(Double.self) {
-            self.value = value
+            self = .double(value)
         } else if let value = try? container.decode(Bool.self) {
-            self.value = value
+            self = .bool(value)
         } else if let value = try? container.decode([String: JSON].self) {
-            self.value = value
+            self = .dictionary(value)
         } else if let value = try? container.decode([JSON].self) {
-            self.value = value
+            self = .array(value)
         } else if container.decodeNil() {
-            // When the JSON contains "null", container.decodeNil() returns true
-            // and we use the singleton instance
-            self.value = JSONNull.null
+            self = .null
         } else {
             throw DecodingError.dataCorruptedError(
                 in: container, debugDescription: "Invalid JSON value")
         }
     }
 
-    public func merging(_ b: JSONType) -> JSON {
-        JSON.wrap(value.merging(b))
+    public init(_ value: [String: JSONType]) {
+        self = .dictionary(value.mapValues { JSON.wrap($0) })
+    }
+
+    public init(_ value: [JSONType]) {
+        self = .array(value.map { JSON.wrap($0) })
+    }
+
+    public init(data: Data) throws {
+        self = try JSONDecoder().decode(JSON.self, from: data)
+    }
+
+    public init(arrayLiteral elements: Any...) {
+        self = .array(elements.map { JSON.wrap($0) })
+    }
+
+    // For ease-of-use, we need to accept dictionary literals of type [String: Any],
+    // which is what Swift creates when the values are of different types.
+    // This constructor will fail if the values are not JSONType.
+    public init(dictionaryLiteral elements: (String, Any)...) {
+        self = .dictionary(Dictionary(uniqueKeysWithValues: elements.map { ($0.0, JSON.wrap($0.1)) }))
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        switch self {
+        case .string(let value):
+            try value.encode(to: encoder)
+        case .int(let value):
+            try value.encode(to: encoder)
+        case .double(let value):
+            try value.encode(to: encoder)
+        case .bool(let value):
+            try value.encode(to: encoder)
+        case .array(let value):
+            try value.encode(to: encoder)
+        case .dictionary(let value):
+            try value.encode(to: encoder)
+        case .null:
+            var container = encoder.singleValueContainer()
+            try container.encodeNil()
+        }
+    }
+
+    public func data() throws -> Data {
+        try JSONEncoder().encode(self)
+    }
+
+    static func wrap(_ value: Any) -> JSON {
+        switch value {
+        case let value as JSON:
+            return value
+        case let value as String:
+            return .string(value)
+        case let value as Int:
+            return .int(value)
+        case let value as Double:
+            return .double(value)
+        case let value as Bool:
+            return .bool(value)
+        case let value as [JSON]:
+            return .array(value)
+        case let value as [String: JSON]:
+            return .dictionary(value)
+        case let value as [String: Any]:
+            return .dictionary(value.mapValues { JSON.wrap($0) })
+        case let value as [Any]:
+            return .array(value.map { JSON.wrap($0) })
+        default:
+            fatalError("Unsupported JSON type: \(type(of: value))")
+        }
+    }
+
+    public var stringValue: String {
+        switch self {
+        case .string(let value):
+            return value
+        case .int(let value):
+            return String(value)
+        case .double(let value):
+            return String(value)
+        case .bool(let value):
+            return String(value)
+        case .array, .dictionary, .null:
+            return ""
+        }
+    }
+
+    public var arrayValue: [JSON] {
+        if case .array(let value) = self {
+            return value
+        }
+        return []
+    }
+
+    public var boolValue: Bool {
+        if case .bool(let value) = self {
+            return value
+        }
+        return false
+    }
+
+    public var intValue: Int {
+        switch self {
+        case .int(let value):
+            return value
+        case .double(let value):
+            return Int(value)
+        default:
+            return 0
+        }
+    }
+
+    public var doubleValue: Double {
+        switch self {
+        case .double(let value):
+            return value
+        case .int(let value):
+            return Double(value)
+        default:
+            return 0.0
+        }
+    }
+
+    public var dictionaryValue: [String: JSON] {
+        if case .dictionary(let value) = self {
+            return value
+        }
+        return [:]
     }
 
     public var isNull: Bool {
-        value is JSONNull
-    }
-
-    // Helper method to create JSON null value
-    public static var null: JSON {
-        JSON(JSONNull.null)
-    }
-
-    // Subscript to access nested JSON values.
-    // Returns JSON.null if the value is not found.
-    public subscript(key: String) -> JSON {
-        // First, try the direct [String: JSON] case which is most common
-        if let dict = value as? [String: JSON] {
-            return dict[key] ?? JSON.null
+        if case .null = self {
+            return true
         }
+        return false
+    }
 
-        // If the above fails, check if we have a dictionary of a different type
-        // that conforms to JSONType, and extract the value
-        if let dict = value as? [String: JSONType] {
-            if let nestedValue = dict[key] {
-                return JSON.wrap(nestedValue)
+    public func merging(_ other: JSON) -> JSON {
+        switch (self, other) {
+        case (.dictionary(let dict1), .dictionary(let dict2)):
+            var result = dict1
+            for (key, value) in dict2 {
+                if let existingValue = dict1[key] {
+                    result[key] = existingValue.merging(value)
+                } else {
+                    result[key] = value
+                }
             }
+            return .dictionary(result)
+        case (.array(let array1), .array(let array2)):
+            return .array(array1 + array2)
+        default:
+            return JSON.wrap(other)
         }
+    }
 
-        return JSON.null
+    public func merging(_ other: JSONType) -> JSON {
+        merging(JSON.wrap(other))
+    }
+
+    public subscript(key: String) -> JSON {
+        if case .dictionary(let dict) = self {
+            return dict[key] ?? .null
+        }
+        return .null
     }
 
     public subscript(index: Int) -> JSON {
-        // Similar approach for arrays
-        if let array = value as? [JSON] {
-            return index < array.count ? array[index] : JSON.null
+        if case .array(let array) = self {
+            return index < array.count ? array[index] : .null
         }
-
-        if let array = value as? [JSONType] {
-            if index < array.count {
-                return JSON.wrap(array[index])
-            }
-        }
-
-        return JSON.null
+        return .null
     }
 
     public subscript(subscript: JSONSubscript) -> JSON {
@@ -254,30 +296,6 @@ public extension JSONType {
     // A JSON value can be decoded from a data object.
     static func decode(from data: Data) throws -> Self {
         try JSONDecoder().decode(Self.self, from: data)
-    }
-}
-
-public extension JSONType {
-    func merging(_ b: JSONType) -> JSONType {
-        // Merge two JSON values.
-        // If the values are dictionaries, recursively merge the dictionaries.
-        // If the values are arrays, concatenate the arrays.
-        // If either value is null, return the other value.
-        // If the values are scalars, return the second value.
-        // If the values are different types, return the second value.
-        if self is JSONNull {
-            return b
-        } else if b is JSONNull {
-            return self
-        } else if let dict1 = self as? [String: JSONType], let dict2 = b as? [String: JSONType] {
-            let mergedDict = dict1.merging(dict2, uniquingKeysWith: { $0.merging($1) })
-            return JSON(mergedDict)
-        } else if let array1 = self as? [JSONType], let array2 = b as? [JSONType] {
-            let combinedArray = array1 + array2
-            return JSON(combinedArray)
-        } else {
-            return b
-        }
     }
 }
 

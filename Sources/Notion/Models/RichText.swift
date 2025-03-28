@@ -24,15 +24,27 @@ public struct RichText: Codable, Sendable, ExpressibleByStringLiteral {
         try json.encode(to: encoder)
     }
 
-    func italic() throws -> RichText {
+    public func italic() -> RichText {
         return RichText(json: self.json.merging(["annotations": ["italic": true]]))
     }
 
-    func bold() throws -> RichText {
+    public func bold() -> RichText {
         return RichText(json: json.merging(["annotations": ["bold": true]]))
     }
+    
+    public func strikethrough() -> RichText {
+        return RichText(json: json.merging(["annotations": ["strikethrough": true]]))
+    }
+    
+    public func underline() -> RichText {
+        return RichText(json: json.merging(["annotations": ["underline": true]]))
+    }
+    
+    public func code() -> RichText {
+        return RichText(json: json.merging(["annotations": ["code": true]]))
+    }
 
-    func color(_ color: Color) throws -> RichText {
+    public func color(_ color: Color) -> RichText {
         return RichText(json: json.merging(["annotations": ["color": color.rawValue]]))
     }
 }

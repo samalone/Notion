@@ -10,13 +10,13 @@ import Testing
     #expect(text.json["type"].stringValue == "text")
     #expect(text.json["text"]["content"].stringValue == "Hello, world!")
     
-    let italicText = try text.italic()
+    let italicText = text.italic()
     print(italicText.prettyPrinted)
     #expect(italicText.json["annotations"]["italic"].boolValue)
     
-    let boldText = try text.bold()
+    let boldText = text.bold()
     #expect(boldText.json["annotations"]["bold"].boolValue)
     
-    let redText = try text.color(.red)
+    let redText = text.color(.red)
     #expect(redText.json["annotations"]["color"].stringValue == "red")
 }
