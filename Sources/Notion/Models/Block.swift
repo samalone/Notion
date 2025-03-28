@@ -2,7 +2,7 @@ import Foundation
 
 /// Represents a Notion block
 public struct Block: Codable, Sendable, Identifiable {
-    var json: JSON
+    public var json: JSON
 
     init(json: JSON) {
         self.json = json

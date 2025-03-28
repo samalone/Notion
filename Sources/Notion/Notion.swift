@@ -23,9 +23,14 @@ public struct Notion: Sendable {
         }
 
         guard let url = components.url else {
-            throw NSError(
-                domain: "NotionError", code: -1,
-                userInfo: [NSLocalizedDescriptionKey: "Invalid URL components"])
+            let errorResponse = NotionAPIError.Response(
+                object: "error",
+                status: 400,
+                code: "invalid_url",
+                message: "Invalid URL components",
+                requestID: nil
+            )
+            throw NotionAPIError(response: errorResponse)
         }
 
         var request = URLRequest(url: url)
@@ -115,7 +120,10 @@ public struct Notion: Sendable {
     public func deleteBlock(id: String) async throws {
         var request = try await getRequest(for: "blocks/\(id)")
         request.httpMethod = "DELETE"
-        let (_, _) = try await URLSession.shared.data(for: request)
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+        // Check for error responses from the API
+        try throwIfError(data: data)
     }
 
     @discardableResult
