@@ -141,7 +141,7 @@ public enum JSON: JSONType, ExpressibleByArrayLiteral, ExpressibleByDictionaryLi
         try JSONEncoder().encode(self)
     }
 
-    static func wrap(_ value: Any) -> JSON {
+    public static func wrap(_ value: Any) -> JSON {
         switch value {
         case let value as JSON:
             return value
