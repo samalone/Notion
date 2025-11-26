@@ -141,6 +141,51 @@ public struct Notion: Sendable {
 
         return try processAPIResponse(data: response)
     }
+    
+    /// Query a Notion database with optional filters
+    /// - Parameters:
+    ///   - id: The database ID
+    ///   - filter: Optional filter JSON object (see Notion API documentation for filter format)
+    /// - Returns: A list response containing matching pages
+    public func queryDatabase(id: String, filter: JSON? = nil) async throws -> ListResponse<Page> {
+        var json: JSON = [:]
+        if let filter = filter {
+            json = json.merging(["filter": filter])
+        }
+        
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(json)
+        
+        var request = try await getRequest(for: "databases/\(id)/query")
+        request.httpMethod = "POST"
+        request.httpBody = data
+        
+        let (response, _) = try await URLSession.shared.data(for: request)
+        
+        return try processAPIResponse(data: response)
+    }
+    
+    /// Create a new page in a database
+    /// - Parameters:
+    ///   - databaseId: The database ID
+    ///   - properties: The properties to set on the new page (JSON object matching database schema)
+    /// - Returns: The created page
+    public func createDatabasePage(databaseId: String, properties: JSON) async throws -> Page {
+        let json: JSON = [
+            "parent": ["type": "database_id", "database_id": databaseId],
+            "properties": properties
+        ]
+        
+        let encoder = JSONEncoder()
+        let data = try encoder.encode(json)
+        
+        var request = try await getRequest(for: "pages")
+        request.httpMethod = "POST"
+        request.httpBody = data
+        
+        let (response, _) = try await URLSession.shared.data(for: request)
+        return try processAPIResponse(data: response)
+    }
 }
 
 /// Base protocol for all Notion objects
